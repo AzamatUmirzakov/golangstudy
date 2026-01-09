@@ -24,7 +24,8 @@ CREATE TABLE timetable (
     timetable_id INT PRIMARY KEY,
     faculty_id INT,
     group_id INT,
-    time VARCHAR(20),
+    start_time TIME,
+    end_time TIME,
     weekday VARCHAR(10),
     location VARCHAR(20),
     subject VARCHAR(50)
@@ -131,7 +132,8 @@ INSERT INTO timetable (
         timetable_id,
         faculty_id,
         group_id,
-        time,
+        start_time,
+        end_time,
         weekday,
         location,
         subject
@@ -140,7 +142,8 @@ VALUES (
         1,
         1,
         1,
-        '9:00 - 10:00',
+        '9:00:00',
+        '10:00:00',
         'Monday',
         '7.103',
         'ENG 101'
@@ -149,7 +152,8 @@ VALUES (
         2,
         1,
         2,
-        '10:00 - 11:00',
+        '10:00:00',
+        '11:00:00',
         'Tuesday',
         '7.103',
         'ENG 101'
@@ -158,7 +162,8 @@ VALUES (
         3,
         2,
         3,
-        '12:00 - 13:00',
+        '12:00:00',
+        '13:00:00',
         'Wednesday',
         '8.109',
         'SOC 120'
@@ -167,7 +172,8 @@ VALUES (
         4,
         2,
         4,
-        '14:00 - 15:00',
+        '14:00:00',
+        '15:00:00',
         'Thursday',
         '6.120',
         'KAZ 303'
