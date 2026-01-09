@@ -178,4 +178,13 @@ WHERE gender = 'F'
 ORDER BY birth_date ASC;
 ALTER TABLE timetable
 ADD COLUMN professor VARCHAR(30);
+UPDATE timetable
+SET professor = 'Akhtar'
+WHERE subject = 'ENG 101';
+UPDATE timetable
+SET professor = 'Donovan Cox'
+WHERE subject = 'SOC 120';
+UPDATE timetable
+SET professor = 'Dr. Akhmetova'
+WHERE subject = 'KAZ 303';
 -- ALTER TABLE student DROP COLUMN email;
