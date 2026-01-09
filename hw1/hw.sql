@@ -1,3 +1,7 @@
+DROP TABLE student;
+DROP TABLE student_group;
+DROP TABLE faculty;
+DROP TABLE timetable;
 CREATE TABLE faculty (
     faculty_id INT PRIMARY KEY,
     faculty_name VARCHAR(100) NOT NULL
@@ -125,20 +129,53 @@ VALUES (
     );
 INSERT INTO timetable (
         timetable_id,
-        time,
         faculty_id,
         group_id,
+        time,
+        weekday,
         location,
         subject
     )
-VALUES (1, '9:00 - 10:00', 1, 1, '7.103', 'ENG 101'),
-    (2, '10:00 - 11:00', 1, 2, '7.103', 'ENG 101'),
-    (3, '12:00 - 13:00', 2, 3, '8.109', 'SOC 120'),
-    (4, '14:00 - 15:00', 2, 4, '6.120', 'KAZ 303');
+VALUES (
+        1,
+        1,
+        1,
+        '9:00 - 10:00',
+        'Monday',
+        '7.103',
+        'ENG 101'
+    ),
+    (
+        2,
+        1,
+        2,
+        '10:00 - 11:00',
+        'Tuesday',
+        '7.103',
+        'ENG 101'
+    ),
+    (
+        3,
+        2,
+        3,
+        '12:00 - 13:00',
+        'Wednesday',
+        '8.109',
+        'SOC 120'
+    ),
+    (
+        4,
+        2,
+        4,
+        '14:00 - 15:00',
+        'Thursday',
+        '6.120',
+        'KAZ 303'
+    );
 SELECT *
 from student
 WHERE gender = 'F'
 ORDER BY birth_date ASC;
 ALTER TABLE timetable
 ADD COLUMN professor VARCHAR(30);
-ALTER TABLE student DROP COLUMN email;
+-- ALTER TABLE student DROP COLUMN email;

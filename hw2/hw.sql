@@ -15,7 +15,7 @@ VALUES (
     'M',
     '2005-09-12',
     NULL
-  )
+  );
 INSERT INTO student (
     student_id,
     first_name,
@@ -33,7 +33,7 @@ VALUES (
     'M',
     '2008-01-12',
     NULL
-  )
+  );
 INSERT INTO student_group (group_id, faculty_id, group_name)
 VALUES (5, 1, 'Mechanical engineers'),
   (6, 2, 'Anthropologists');
