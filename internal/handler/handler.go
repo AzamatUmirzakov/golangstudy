@@ -6,8 +6,10 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/jackc/pgx/v5"
 	"github.com/labstack/echo/v4"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func HelloWorldHandler(c echo.Context) error {
@@ -121,6 +123,68 @@ func HandleGetAttendanceBySubjectID(conn *pgx.Conn) echo.HandlerFunc {
 		}
 
 		c.JSON(200, attendances)
+		return nil
+	}
+}
+
+func HandleUserRegister(conn *pgx.Conn) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		var registerRequest models.UserRegisterRequest
+		err := c.Bind(&registerRequest)
+		if err != nil {
+			c.JSON(400, map[string]string{"error": "invalid request body"})
+		}
+
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(registerRequest.Password), bcrypt.DefaultCost)
+
+		if err != nil {
+			c.JSON(500, map[string]string{"error": "failed to hash password"})
+		}
+
+		err = repository.CreateUser(conn, registerRequest.Email, string(hashedPassword))
+
+		if err != nil {
+			c.JSON(500, map[string]string{"error": err.Error()})
+		}
+
+		c.JSON(200, map[string]string{"message": "user registered successfully"})
+		return nil
+	}
+}
+
+func HandleUserLogin(conn *pgx.Conn, jwtSecret string) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		var loginRequest models.UserRegisterRequest
+		err := c.Bind(&loginRequest)
+		if err != nil {
+			c.JSON(400, map[string]string{"error": "invalid request body"})
+		}
+
+		hashedPassword, err := repository.GetUserByEmail(conn, loginRequest.Email)
+		if err != nil {
+			c.JSON(500, map[string]string{"error": err.Error()})
+		}
+
+		err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(loginRequest.Password))
+		if err != nil {
+			c.JSON(401, map[string]string{"error": "invalid password"})
+		}
+
+		claims := models.UserClaims{
+			Email: loginRequest.Email,
+		}
+
+		token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+		tokenString, err := token.SignedString([]byte(jwtSecret))
+		if err != nil {
+			c.JSON(500, map[string]string{"error": "failed to generate token"})
+			return err
+		}
+
+		c.Response().Header().Set("Authorization", "Bearer "+tokenString)
+
+		c.JSON(200, map[string]string{"message": "user logged in successfully"})
 		return nil
 	}
 }

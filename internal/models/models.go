@@ -1,5 +1,7 @@
 package models
 
+import "github.com/golang-jwt/jwt/v5"
+
 type Student struct {
 	StudentID int    `json:"student_id"`
 	FirstName string `json:"first_name"`
@@ -56,4 +58,20 @@ type AttendancePostRequest struct {
 type GetStudentResponse struct {
 	Student   Student `json:"student"`
 	GroupName string  `json:"group_name"`
+}
+
+type User struct {
+	UserID   int    `json:"user_id"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+type UserRegisterRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+type UserClaims struct {
+	Email string `json:"email"`
+	jwt.RegisteredClaims
 }

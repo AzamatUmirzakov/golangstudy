@@ -113,3 +113,25 @@ func GetAttendanceByStudentID(connection *pgx.Conn, studentId int) ([]models.Att
 
 	return attendances, nil
 }
+
+func CreateUser(connection *pgx.Conn, email string, hashedPassword string) error {
+	_, err := connection.Exec(context.Background(), "INSERT INTO users (email, password) VALUES ($1, $2)", email, hashedPassword)
+	return err
+}
+
+func GetUserByEmail(connection *pgx.Conn, email string) (string, error) {
+	var user models.User
+	rows, err := connection.Query(context.Background(), "SELECT * FROM users WHERE email = $1", email)
+	if err != nil {
+		return "", err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		err := rows.Scan(&user.UserID, &user.Email, &user.Password)
+		if err != nil {
+			return "", err
+		}
+	}
+	return user.Password, nil
+}
