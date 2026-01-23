@@ -29,6 +29,16 @@ func GetGroupByID(connection *pgx.Conn, groupId int) (models.StudentGroup, error
 	return group, nil
 }
 
+func GetTimetableByTimetableID(connection *pgx.Conn, timetableId int) (models.Timetable, error) {
+	var timetable models.Timetable
+	err := connection.QueryRow(context.Background(), "SELECT * FROM timetable WHERE timetable_id = $1", timetableId).Scan(&timetable.TimetableID, &timetable.FacultyID, &timetable.GroupID, &timetable.StartTime, &timetable.EndTime, &timetable.Weekday, &timetable.Location, &timetable.CourseID)
+	if err != nil {
+		return models.Timetable{}, err
+	}
+
+	return timetable, nil
+}
+
 func GetTimetables(connection *pgx.Conn) ([]models.Timetable, error) {
 	rows, err := connection.Query(context.Background(), "SELECT * FROM timetable ORDER BY start_time ASC")
 	if err != nil {
@@ -40,7 +50,7 @@ func GetTimetables(connection *pgx.Conn) ([]models.Timetable, error) {
 	var timetables []models.Timetable
 	for rows.Next() {
 		var timetable models.Timetable
-		err := rows.Scan(&timetable.TimetableID, &timetable.FacultyID, &timetable.GroupID, &timetable.StartTime, &timetable.EndTime, &timetable.Weekday, &timetable.Location, &timetable.CourseID, &timetable.Professor)
+		err := rows.Scan(&timetable.TimetableID, &timetable.FacultyID, &timetable.GroupID, &timetable.StartTime, &timetable.EndTime, &timetable.Weekday, &timetable.Location, &timetable.CourseID)
 		if err != nil {
 			return nil, err
 		}
@@ -60,7 +70,7 @@ func GetTimetableByGroupID(connection *pgx.Conn, groupId int) ([]models.Timetabl
 
 	for rows.Next() {
 		var timetable models.Timetable
-		err := rows.Scan(&timetable.TimetableID, &timetable.FacultyID, &timetable.GroupID, &timetable.StartTime, &timetable.EndTime, &timetable.Weekday, &timetable.Location, &timetable.CourseID, &timetable.Professor)
+		err := rows.Scan(&timetable.TimetableID, &timetable.FacultyID, &timetable.GroupID, &timetable.StartTime, &timetable.EndTime, &timetable.Weekday, &timetable.Location, &timetable.CourseID)
 		if err != nil {
 			return nil, err
 		}
@@ -69,8 +79,8 @@ func GetTimetableByGroupID(connection *pgx.Conn, groupId int) ([]models.Timetabl
 	return timetables, nil
 }
 
-func RecordAttendance(connection *pgx.Conn, attendance models.AttendancePostRequest) error {
-	_, err := connection.Exec(context.Background(), "INSERT INTO attendance (student_id, course_id, visited, visit_day) VALUES ($1, $2, $3, $4)", attendance.StudentID, attendance.CourseID, attendance.Visited, attendance.VisitDay)
+func RecordAttendance(connection *pgx.Conn, attendance models.Attendance) error {
+	_, err := connection.Exec(context.Background(), "INSERT INTO attendance (student_id, timetable_id, course_id, visited, visit_day) VALUES ($1, $2, $3, $4, $5)", attendance.StudentID, attendance.TimetableID, attendance.CourseID, attendance.Visited, attendance.VisitDay)
 	return err
 }
 
@@ -84,7 +94,7 @@ func GetAttendanceBySubjectID(connection *pgx.Conn, courseId int) ([]models.Atte
 
 	for rows.Next() {
 		var attendance models.Attendance
-		err := rows.Scan(&attendance.AttendanceID, &attendance.StudentID, &attendance.CourseID, &attendance.Visited, &attendance.VisitDay)
+		err := rows.Scan(&attendance.AttendanceID, &attendance.Visited, &attendance.VisitDay, &attendance.StudentID, &attendance.CourseID, &attendance.TimetableID)
 		if err != nil {
 			return nil, err
 		}
@@ -104,7 +114,7 @@ func GetAttendanceByStudentID(connection *pgx.Conn, studentId int) ([]models.Att
 
 	for rows.Next() {
 		var attendance models.Attendance
-		err := rows.Scan(&attendance.AttendanceID, &attendance.StudentID, &attendance.CourseID, &attendance.Visited, &attendance.VisitDay)
+		err := rows.Scan(&attendance.AttendanceID, &attendance.Visited, &attendance.VisitDay, &attendance.StudentID, &attendance.CourseID, &attendance.TimetableID)
 		if err != nil {
 			return nil, err
 		}

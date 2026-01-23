@@ -1,16 +1,18 @@
--- DROP TABLE IF EXISTS attendance CASCADE;
--- DROP TABLE IF EXISTS timetable CASCADE;
--- DROP TABLE IF EXISTS student CASCADE;
--- DROP TABLE IF EXISTS course CASCADE;
--- DROP TABLE IF EXISTS student_group CASCADE;
--- DROP TABLE IF EXISTS faculty CASCADE;
+-- DROP TABLE IF EXISTS attendance;
+-- DROP TABLE IF EXISTS course_enrollment;
+-- DROP TABLE IF EXISTS timetable;
+-- DROP TABLE IF EXISTS student;
+-- DROP TABLE IF EXISTS course;
+-- DROP TABLE IF EXISTS student_group;
+-- DROP TABLE IF EXISTS faculty;
+-- DROP TABLE IF EXISTS users;
 CREATE TABLE faculty (
     faculty_id SERIAL PRIMARY KEY,
     faculty_name VARCHAR(100) NOT NULL
 );
 CREATE TABLE student_group (
     group_id SERIAL PRIMARY KEY,
-    faculty_id INT REFERENCES faculty(faculty_id),
+    faculty_id INT REFERENCES faculty(faculty_id) NOT NULL,
     group_name VARCHAR(30) NOT NULL
 );
 CREATE TABLE student (
@@ -18,47 +20,62 @@ CREATE TABLE student (
     first_name VARCHAR(20) NOT NULL,
     last_name VARCHAR(20) NOT NULL,
     email VARCHAR(30) UNIQUE NOT NULL,
-    gender CHAR NOT NULL,
-    birth_date VARCHAR(10) NOT NULL,
-    group_id INT REFERENCES student_group(group_id)
+    gender CHAR(1) NOT NULL CHECK (gender IN ('M', 'F')),
+    birth_date DATE NOT NULL,
+    group_id INT REFERENCES student_group(group_id) NOT NULL
+);
+CREATE TABLE professor (
+    professor_id SERIAL PRIMARY KEY,
+    first_name VARCHAR(20) NOT NULL,
+    last_name VARCHAR(20) NOT NULL,
+    email VARCHAR(30) UNIQUE NOT NULL,
+    faculty_id INT REFERENCES faculty(faculty_id) NOT NULL
 );
 CREATE TABLE course (
     course_id SERIAL PRIMARY KEY,
-    course_name VARCHAR(100) NOT NULL
+    course_name VARCHAR(100) NOT NULL,
+    faculty_id INT REFERENCES faculty(faculty_id) NOT NULL,
+    professor_id INT REFERENCES professor(professor_id) NOT NULL
 );
+-- CREATE TYPE weekday_enum AS ENUM (
+--     'Monday',
+--     'Tuesday',
+--     'Wednesday',
+--     'Thursday',
+--     'Friday',
+--     'Saturday',
+--     'Sunday'
+-- );
 CREATE TABLE timetable (
     timetable_id SERIAL PRIMARY KEY,
-    faculty_id INT REFERENCES faculty(faculty_id),
-    group_id INT REFERENCES student_group(group_id),
-    start_time TIME,
-    end_time TIME,
-    weekday VARCHAR(10),
+    faculty_id INT REFERENCES faculty(faculty_id) NOT NULL,
+    group_id INT REFERENCES student_group(group_id) NOT NULL,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    weekday weekday_enum NOT NULL,
     location VARCHAR(20),
-    course_id INT REFERENCES course(course_id)
+    course_id INT REFERENCES course(course_id) NOT NULL
 );
-INSERT INTO course (course_id, course_name)
-VALUES (1, 'ENG 101'),
-    (2, 'SOC 120'),
-    (3, 'KAZ 303');
 CREATE TABLE attendance (
     attendance_id SERIAL PRIMARY KEY,
-    student_id INT NOT NULL,
-    course_id INT NOT NULL,
     visited BOOLEAN NOT NULL,
-    visit_day VARCHAR(10) NOT NULL,
-    FOREIGN KEY (student_id) REFERENCES student(student_id),
-    FOREIGN KEY (course_id) REFERENCES course(course_id)
+    visit_day DATE NOT NULL,
+    student_id INT NOT NULL REFERENCES student(student_id),
+    course_id INT NOT NULL REFERENCES course(course_id),
+    timetable_id INT NOT NULL REFERENCES timetable(timetable_id)
 );
-INSERT INTO faculty (faculty_id, faculty_name)
-VALUES (1, 'Engineering'),
-    (2, 'Гуманитарный');
-INSERT INTO student_group (group_id, faculty_id, group_name)
-VALUES (1, 1, 'Civil engineers'),
-    (2, 1, 'Electrical engineers'),
-    (3, 2, 'Sociologists'),
-    (4, 2, 'Linguists');
+CREATE TABLE course_enrollment (
+    enrollment_id SERIAL PRIMARY KEY,
+    student_id INT NOT NULL REFERENCES student(student_id),
+    course_id INT NOT NULL REFERENCES course(course_id)
+);
+INSERT INTO faculty (faculty_name)
+VALUES ('School of Computing'),
+    ('Business School');
+INSERT INTO student_group (faculty_id, group_name)
+VALUES (1, 'CS-2024-A'),
+    (2, 'BA-2024-B');
 INSERT INTO student (
-        student_id,
         first_name,
         last_name,
         email,
@@ -67,88 +84,51 @@ INSERT INTO student (
         group_id
     )
 VALUES (
-        2,
-        'Aisulu',
-        'Saparova',
-        'aisulu.saparova@nu.edu.kz',
+        'Alice',
+        'Smith',
+        'alice.s@uni.edu',
         'F',
-        '2003-04-12',
+        '2003-05-15',
         1
     ),
     (
-        3,
-        'Bolat',
-        'Kenesov',
-        'bolat.kenesov@nu.edu.kz',
+        'Bob',
+        'Jones',
+        'bob.j@uni.edu',
         'M',
-        '2005-01-15',
-        2
-    ),
-    (
-        4,
-        'Dana',
-        'Maratova',
-        'dana.maratova@nu.edu.kz',
-        'F',
-        '2005-11-08',
+        '2002-11-20',
         1
     ),
     (
-        5,
-        'Yerkebulan',
-        'Serikov',
-        'yerkebulan.serikov@nu.edu.kz',
+        'Charlie',
+        'Brown',
+        'c.brown@uni.edu',
         'M',
-        '2006-03-30',
-        3
-    ),
-    (
-        6,
-        'Gulnara',
-        'Zhumabaeva',
-        'gulnara.zhumabaeva@nu.edu.kz',
-        'F',
-        '2005-07-14',
+        '2003-01-10',
         2
-    ),
-    (
-        7,
-        'Nurlan',
-        'Almasov',
-        'nurlan.almasov@nu.edu.kz',
-        'M',
-        '2006-02-02',
-        4
-    ),
-    (
-        8,
-        'Kamila',
-        'Asanova',
-        'kamila.asanova@nu.edu.kz',
-        'F',
-        '2005-07-07',
-        4
-    ),
-    (
-        9,
-        'Bauyrzhan',
-        'Ismailov',
-        'bauyrzhan.ismailov@nu.edu.kz',
-        'M',
-        '2002-05-12',
-        2
-    ),
-    (
-        10,
-        'Zarina',
-        'Kuanysheva',
-        'zarina.kuanysheva@nu.edu.kz',
-        'F',
-        '2003-11-09',
-        3
     );
+INSERT INTO professor (
+        first_name,
+        last_name,
+        email,
+        faculty_id
+    )
+VALUES (
+        'Dr. Emily',
+        'Johnson',
+        'emily.johnson@uni.edu',
+        1
+    ),
+    (
+        'Dr. Michael',
+        'Williams',
+        'michael.williams@uni.edu',
+        2
+    );
+INSERT INTO course (course_name, faculty_id, professor_id)
+VALUES ('Introduction to SQL', 1, 1),
+    ('Marketing 101', 2, 2);
 INSERT INTO timetable (
-        timetable_id,
         faculty_id,
         group_id,
         start_time,
@@ -160,122 +140,46 @@ INSERT INTO timetable (
 VALUES (
         1,
         1,
-        1,
-        '9:00:00',
-        '10:00:00',
-        'Monday',
-        '7.103',
-        1
-    ),
-    (
-        2,
-        1,
-        2,
-        '10:00:00',
+        '09:00:00',
         '11:00:00',
-        'Tuesday',
-        '7.103',
+        'Monday',
+        'Room 404',
         1
     ),
     (
-        3,
         2,
-        3,
-        '12:00:00',
+        2,
         '13:00:00',
-        'Wednesday',
-        '8.109',
-        2
-    ),
-    (
-        4,
-        2,
-        4,
-        '14:00:00',
         '15:00:00',
-        'Thursday',
-        '6.120',
-        3
+        'Tuesday',
+        'Hall B',
+        2
     );
-SELECT *
-from student
-WHERE gender = 'F'
-ORDER BY birth_date ASC;
-ALTER TABLE timetable
-ADD COLUMN professor VARCHAR(30);
-UPDATE timetable
-SET professor = 'Akhtar'
-WHERE course_id = 1;
-UPDATE timetable
-SET professor = 'Donovan Cox'
-WHERE course_id = 2;
-UPDATE timetable
-SET professor = 'Dr. Akhmetova'
-WHERE course_id = 3;
--- ALTER TABLE student DROP COLUMN email;
--- homework 2
-INSERT INTO student (
+INSERT INTO attendance (
+        visited,
+        visit_day,
         student_id,
-        first_name,
-        last_name,
-        email,
-        gender,
-        birth_date,
-        group_id
+        course_id,
+        timetable_id
     )
-VALUES (
-        11,
-        'Azamat',
-        'Umirzakov',
-        'azamat.umirzakoff@gmail.com',
-        'M',
-        '2005-09-12',
-        NULL
-    );
-INSERT INTO student (
-        student_id,
-        first_name,
-        last_name,
-        email,
-        gender,
-        birth_date,
-        group_id
-    )
-VALUES (
-        12,
-        'Timur',
-        'Tachka',
-        'timur.tttachka@gmail.com',
-        'M',
-        '2008-01-12',
-        NULL
-    );
-INSERT INTO student_group (group_id, faculty_id, group_name)
-VALUES (5, 1, 'Mechanical engineers'),
-    (6, 2, 'Anthropologists');
-SELECT student.first_name,
-    student.last_name,
-    student_group.group_name
-FROM student
-    INNER JOIN student_group ON student.group_id = student_group.group_id;
-SELECT student.first_name,
-    student.last_name,
-    student_group.group_name
-FROM student
-    LEFT JOIN student_group ON student.group_id = student_group.group_id;
-SELECT student.first_name,
-    student.last_name,
-    student_group.group_name
-FROM student
-    RIGHT JOIN student_group ON student.group_id = student_group.group_id;
-SELECT student.first_name,
-    student.last_name,
-    student_group.group_name
-FROM student
-    FULL OUTER JOIN student_group ON student.group_id = student_group.group_id;
+VALUES (TRUE, '2026-01-19', 1, 1, 1),
+    (FALSE, '2026-01-19', 2, 1, 1),
+    (TRUE, '2026-01-20', 3, 2, 2);
+INSERT INTO course_enrollment (student_id, course_id)
+VALUES (1, 1),
+    -- Alice → Introduction to SQL
+    (2, 1),
+    -- Bob → Introduction to SQL
+    (3, 2),
+    -- Charlie → Marketing 101
+    (3, 1);
+-- Charlie also takes SQL
 -- users
 CREATE TABLE users (
     user_id SERIAL PRIMARY KEY,
     email VARCHAR(100) UNIQUE NOT NULL,
     password VARCHAR(100) NOT NULL
-)
+);
+INSERT INTO users (email, password)
+VALUES ('admin@uni.edu', 'hashed_password_123'),
+    ('alice.s@uni.edu', 'student_pass_456');

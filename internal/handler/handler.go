@@ -5,6 +5,7 @@ import (
 	"golang/internal/repository"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/jackc/pgx/v5"
@@ -84,7 +85,22 @@ func HandlePostSubjectAttendance(conn *pgx.Conn) echo.HandlerFunc {
 			return c.JSON(400, map[string]string{"error": "invalid request body"})
 		}
 
-		err = repository.RecordAttendance(conn, attendanceRequest)
+		var attendance models.Attendance
+		attendance.StudentID = attendanceRequest.StudentID
+		attendance.TimetableID = attendanceRequest.TimetableID
+		attendance.Visited = attendanceRequest.Visited
+		attendance.VisitDay, err = time.Parse("2006-01-02", attendanceRequest.VisitDay)
+		if err != nil {
+			return c.JSON(400, map[string]string{"error": "invalid date format"})
+		}
+
+		timetable, err := repository.GetTimetableByTimetableID(conn, attendance.TimetableID)
+		if err != nil {
+			return c.JSON(500, map[string]string{"error": err.Error()})
+		}
+		attendance.CourseID = timetable.CourseID
+
+		err = repository.RecordAttendance(conn, attendance)
 		if err != nil {
 			return c.JSON(500, map[string]string{"error": err.Error()})
 		}
@@ -182,9 +198,7 @@ func HandleUserLogin(conn *pgx.Conn, jwtSecret string) echo.HandlerFunc {
 			return err
 		}
 
-		c.Response().Header().Set("Authorization", "Bearer "+tokenString)
-
-		c.JSON(200, map[string]string{"message": "user logged in successfully"})
+		c.JSON(200, map[string]string{"message": "user logged in successfully", "token": tokenString})
 		return nil
 	}
 }
