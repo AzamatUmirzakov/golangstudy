@@ -1,11 +1,3 @@
--- DROP TABLE IF EXISTS attendance;
--- DROP TABLE IF EXISTS course_enrollment;
--- DROP TABLE IF EXISTS timetable;
--- DROP TABLE IF EXISTS student;
--- DROP TABLE IF EXISTS course;
--- DROP TABLE IF EXISTS student_group;
--- DROP TABLE IF EXISTS faculty;
--- DROP TABLE IF EXISTS users;
 CREATE TABLE faculty (
     faculty_id SERIAL PRIMARY KEY,
     faculty_name VARCHAR(100) NOT NULL
@@ -37,15 +29,15 @@ CREATE TABLE course (
     faculty_id INT REFERENCES faculty(faculty_id) NOT NULL,
     professor_id INT REFERENCES professor(professor_id) NOT NULL
 );
--- CREATE TYPE weekday_enum AS ENUM (
---     'Monday',
---     'Tuesday',
---     'Wednesday',
---     'Thursday',
---     'Friday',
---     'Saturday',
---     'Sunday'
--- );
+CREATE TYPE weekday_enum AS ENUM (
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+    'Sunday'
+);
 CREATE TABLE timetable (
     timetable_id SERIAL PRIMARY KEY,
     faculty_id INT REFERENCES faculty(faculty_id) NOT NULL,

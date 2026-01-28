@@ -8,17 +8,11 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/jackc/pgx/v5"
-	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
 
 func main() {
-	err := godotenv.Load("../.env")
-	if err != nil {
-		panic(err)
-	}
-
 	databaseURL := os.Getenv("DATABASE_URL")
 	conn, err := pgx.Connect(context.Background(), databaseURL)
 	if err != nil {
