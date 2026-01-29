@@ -41,9 +41,7 @@ func HandleGetStudent(conn *pgx.Conn) echo.HandlerFunc {
 			Student:   student,
 			GroupName: group.GroupName,
 		}
-		c.JSON(200, response)
-
-		return nil
+		return c.JSON(200, response)
 	}
 }
 
@@ -54,8 +52,7 @@ func HandleGetAllClassSchedules(conn *pgx.Conn) echo.HandlerFunc {
 			return c.JSON(500, map[string]string{"error": err.Error()})
 		}
 
-		c.JSON(200, timetables)
-		return nil
+		return c.JSON(200, timetables)
 	}
 }
 
@@ -71,8 +68,7 @@ func HandleGetScheduleByGroupID(conn *pgx.Conn) echo.HandlerFunc {
 			return c.JSON(500, map[string]string{"error": err.Error()})
 		}
 
-		c.JSON(200, timetables)
-		return nil
+		return c.JSON(200, timetables)
 	}
 }
 
@@ -121,8 +117,7 @@ func HandleGetAttendanceByStudentID(conn *pgx.Conn) echo.HandlerFunc {
 			return c.JSON(500, map[string]string{"error": err.Error()})
 		}
 
-		c.JSON(200, attendances)
-		return nil
+		return c.JSON(200, attendances)
 	}
 }
 
@@ -138,8 +133,7 @@ func HandleGetAttendanceBySubjectID(conn *pgx.Conn) echo.HandlerFunc {
 			return c.JSON(500, map[string]string{"error": err.Error()})
 		}
 
-		c.JSON(200, attendances)
-		return nil
+		return c.JSON(200, attendances)
 	}
 }
 
@@ -148,23 +142,23 @@ func HandleUserRegister(conn *pgx.Conn) echo.HandlerFunc {
 		var registerRequest models.UserRegisterRequest
 		err := c.Bind(&registerRequest)
 		if err != nil {
-			c.JSON(400, map[string]string{"error": "invalid request body"})
+			return c.JSON(400, map[string]string{"error": "invalid request body"})
 		}
 
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(registerRequest.Password), bcrypt.DefaultCost)
 
 		if err != nil {
-			c.JSON(500, map[string]string{"error": "failed to hash password"})
+			return c.JSON(500, map[string]string{"error": "failed to hash password"})
 		}
 
 		err = repository.CreateUser(conn, registerRequest.Email, string(hashedPassword))
 
 		if err != nil {
-			c.JSON(500, map[string]string{"error": err.Error()})
+			return c.JSON(500, map[string]string{"error": err.Error()})
 		}
 
-		c.JSON(200, map[string]string{"message": "user registered successfully"})
-		return nil
+		return c.JSON(200, map[string]string{"message": "user registered successfully"})
+	}
 	}
 }
 
@@ -173,17 +167,17 @@ func HandleUserLogin(conn *pgx.Conn, jwtSecret string) echo.HandlerFunc {
 		var loginRequest models.UserRegisterRequest
 		err := c.Bind(&loginRequest)
 		if err != nil {
-			c.JSON(400, map[string]string{"error": "invalid request body"})
+			return c.JSON(400, map[string]string{"error": "invalid request body"})
 		}
 
 		hashedPassword, err := repository.GetUserByEmail(conn, loginRequest.Email)
 		if err != nil {
-			c.JSON(500, map[string]string{"error": err.Error()})
+			return c.JSON(500, map[string]string{"error": err.Error()})
 		}
 
 		err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(loginRequest.Password))
 		if err != nil {
-			c.JSON(401, map[string]string{"error": "invalid password"})
+			return c.JSON(401, map[string]string{"error": "invalid password"})
 		}
 
 		claims := models.UserClaims{
@@ -194,11 +188,9 @@ func HandleUserLogin(conn *pgx.Conn, jwtSecret string) echo.HandlerFunc {
 
 		tokenString, err := token.SignedString([]byte(jwtSecret))
 		if err != nil {
-			c.JSON(500, map[string]string{"error": "failed to generate token"})
-			return err
+			return c.JSON(500, map[string]string{"error": "failed to generate token"})
 		}
 
-		c.JSON(200, map[string]string{"message": "user logged in successfully", "token": tokenString})
-		return nil
+		return c.JSON(200, map[string]string{"message": "user logged in successfully", "token": tokenString})
 	}
 }
