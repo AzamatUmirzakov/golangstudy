@@ -159,7 +159,6 @@ func HandleUserRegister(conn *pgx.Conn) echo.HandlerFunc {
 
 		return c.JSON(200, map[string]string{"message": "user registered successfully"})
 	}
-	}
 }
 
 func HandleUserLogin(conn *pgx.Conn, jwtSecret string) echo.HandlerFunc {
