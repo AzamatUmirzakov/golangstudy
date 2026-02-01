@@ -32,7 +32,7 @@ func GetAllStudents(pool *pgxpool.Pool) ([]models.Student, error) {
 }
 
 func GetAllGroups(pool *pgxpool.Pool) ([]models.StudentGroup, error) {
-	rows, err := pool.Query(context.Background(), "SELECT * FROM student_group")
+	rows, err := pool.Query(context.Background(), "SELECT * FROM student_group ORDER BY group_id ASC")
 	if err != nil {
 		return nil, err
 	}
@@ -55,8 +55,27 @@ func GetAllGroups(pool *pgxpool.Pool) ([]models.StudentGroup, error) {
 	return groups, nil
 }
 
+func CreateGroup(pool *pgxpool.Pool, group models.StudentGroup) (int, error) {
+	var groupID int
+	err := pool.QueryRow(context.Background(), "INSERT INTO student_group (faculty_id, group_name) VALUES ($1, $2) RETURNING group_id", group.FacultyID, group.GroupName).Scan(&groupID)
+	if err != nil {
+		return 0, err
+	}
+	return groupID, nil
+}
+
+func UpdateGroup(pool *pgxpool.Pool, id int, group models.StudentGroup) error {
+	_, err := pool.Exec(context.Background(), "UPDATE student_group SET faculty_id=$1, group_name=$2 WHERE group_id=$3", group.FacultyID, group.GroupName, id)
+	return err
+}
+
+func DeleteGroup(pool *pgxpool.Pool, id int) error {
+	_, err := pool.Exec(context.Background(), "DELETE FROM student_group WHERE group_id=$1", id)
+	return err
+}
+
 func GetAllFaculties(pool *pgxpool.Pool) ([]models.Faculty, error) {
-	rows, err := pool.Query(context.Background(), "SELECT * FROM faculty")
+	rows, err := pool.Query(context.Background(), "SELECT * FROM faculty ORDER BY faculty_id ASC")
 	if err != nil {
 		return nil, err
 	}
@@ -77,6 +96,25 @@ func GetAllFaculties(pool *pgxpool.Pool) ([]models.Faculty, error) {
 	}
 
 	return faculties, nil
+}
+
+func CreateFaculty(pool *pgxpool.Pool, faculty models.Faculty) (int, error) {
+	var facultyID int
+	err := pool.QueryRow(context.Background(), "INSERT INTO faculty (faculty_name) VALUES ($1) RETURNING faculty_id", faculty.FacultyName).Scan(&facultyID)
+	if err != nil {
+		return 0, err
+	}
+	return facultyID, nil
+}
+
+func UpdateFaculty(pool *pgxpool.Pool, id int, faculty models.Faculty) error {
+	_, err := pool.Exec(context.Background(), "UPDATE faculty SET faculty_name=$1 WHERE faculty_id=$2", faculty.FacultyName, id)
+	return err
+}
+
+func DeleteFaculty(pool *pgxpool.Pool, id int) error {
+	_, err := pool.Exec(context.Background(), "DELETE FROM faculty WHERE faculty_id=$1", id)
+	return err
 }
 
 func GetStudentByID(pool *pgxpool.Pool, id int) (models.Student, error) {

@@ -67,6 +67,61 @@ func HandleGetGroups(pool *pgxpool.Pool) echo.HandlerFunc {
 	}
 }
 
+func HandlePutGroup(pool *pgxpool.Pool) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		id, err := strconv.Atoi(c.Param("id"))
+		if err != nil {
+			return c.JSON(400, map[string]string{"error": "invalid group id"})
+		}
+
+		var group models.StudentGroup
+		err = c.Bind(&group)
+		if err != nil {
+			return c.JSON(400, map[string]string{"error": "invalid request body"})
+		}
+
+		err = repository.UpdateGroup(pool, id, group)
+		if err != nil {
+			return c.JSON(500, map[string]string{"error": err.Error()})
+		}
+
+		return c.JSON(200, map[string]string{"message": "group updated successfully"})
+	}
+}
+
+func HandleDeleteGroup(pool *pgxpool.Pool) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		id, err := strconv.Atoi(c.Param("id"))
+		if err != nil {
+			return c.JSON(400, map[string]string{"error": "invalid group id"})
+		}
+
+		err = repository.DeleteGroup(pool, id)
+		if err != nil {
+			return c.JSON(500, map[string]string{"error": err.Error()})
+		}
+
+		return c.JSON(200, map[string]string{"message": "group deleted successfully"})
+	}
+}
+
+func HandlePostGroup(pool *pgxpool.Pool) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		var group models.StudentGroup
+		err := c.Bind(&group)
+		if err != nil {
+			return c.JSON(400, map[string]string{"error": "invalid request body"})
+		}
+
+		id, err := repository.CreateGroup(pool, group)
+		if err != nil {
+			return c.JSON(500, map[string]string{"error": err.Error()})
+		}
+
+		return c.JSON(200, map[string]string{"message": "group created successfully", "group_id": strconv.Itoa(id)})
+	}
+}
+
 func HandleGetFaculties(pool *pgxpool.Pool) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		faculties, err := repository.GetAllFaculties(pool)
@@ -75,6 +130,61 @@ func HandleGetFaculties(pool *pgxpool.Pool) echo.HandlerFunc {
 		}
 
 		return c.JSON(200, faculties)
+	}
+}
+
+func HandlePostFaculty(pool *pgxpool.Pool) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		var faculty models.Faculty
+		err := c.Bind(&faculty)
+		if err != nil {
+			return c.JSON(400, map[string]string{"error": "invalid request body"})
+		}
+
+		id, err := repository.CreateFaculty(pool, faculty)
+		if err != nil {
+			return c.JSON(500, map[string]string{"error": err.Error()})
+		}
+
+		return c.JSON(200, map[string]string{"message": "faculty created successfully", "faculty_id": strconv.Itoa(id)})
+	}
+}
+
+func HandleUpdateFaculty(pool *pgxpool.Pool) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		id, err := strconv.Atoi(c.Param("id"))
+		if err != nil {
+			return c.JSON(400, map[string]string{"error": "invalid faculty id"})
+		}
+
+		var faculty models.Faculty
+		err = c.Bind(&faculty)
+		if err != nil {
+			return c.JSON(400, map[string]string{"error": "invalid request body"})
+		}
+
+		err = repository.UpdateFaculty(pool, id, faculty)
+		if err != nil {
+			return c.JSON(500, map[string]string{"error": err.Error()})
+		}
+
+		return c.JSON(200, map[string]string{"message": "faculty updated successfully"})
+	}
+}
+
+func HandleDeleteFaculty(pool *pgxpool.Pool) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		id, err := strconv.Atoi(c.Param("id"))
+		if err != nil {
+			return c.JSON(400, map[string]string{"error": "invalid faculty id"})
+		}
+
+		err = repository.DeleteFaculty(pool, id)
+		if err != nil {
+			return c.JSON(500, map[string]string{"error": err.Error()})
+		}
+
+		return c.JSON(200, map[string]string{"message": "faculty deleted successfully"})
 	}
 }
 
