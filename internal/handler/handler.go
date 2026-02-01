@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/labstack/echo/v4"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -17,7 +17,7 @@ func HelloWorldHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, struct{ Message string }{Message: "Hello World!"})
 }
 
-func HandleGetStudent(conn *pgx.Conn) echo.HandlerFunc {
+func HandleGetStudent(pool *pgxpool.Pool) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		id, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
@@ -25,13 +25,13 @@ func HandleGetStudent(conn *pgx.Conn) echo.HandlerFunc {
 		}
 
 		// student query
-		student, err := repository.GetStudentByID(conn, id)
+		student, err := repository.GetStudentByID(pool, id)
 		if err != nil {
 			return c.JSON(500, map[string]string{"error": err.Error()})
 		}
 
 		// group query
-		group, err := repository.GetGroupByID(conn, student.GroupID)
+		group, err := repository.GetGroupByID(pool, student.GroupID)
 		if err != nil {
 			return c.JSON(500, map[string]string{"error": err.Error()})
 		}
@@ -45,9 +45,42 @@ func HandleGetStudent(conn *pgx.Conn) echo.HandlerFunc {
 	}
 }
 
-func HandleGetAllClassSchedules(conn *pgx.Conn) echo.HandlerFunc {
+func HandleGetAllStudents(pool *pgxpool.Pool) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		timetables, err := repository.GetTimetables(conn)
+		students, err := repository.GetAllStudents(pool)
+		if err != nil {
+			return c.JSON(500, map[string]string{"error": err.Error()})
+		}
+
+		return c.JSON(200, students)
+	}
+}
+
+func HandleGetGroups(pool *pgxpool.Pool) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		groups, err := repository.GetAllGroups(pool)
+		if err != nil {
+			return c.JSON(500, map[string]string{"error": err.Error()})
+		}
+
+		return c.JSON(200, groups)
+	}
+}
+
+func HandleGetFaculties(pool *pgxpool.Pool) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		faculties, err := repository.GetAllFaculties(pool)
+		if err != nil {
+			return c.JSON(500, map[string]string{"error": err.Error()})
+		}
+
+		return c.JSON(200, faculties)
+	}
+}
+
+func HandleGetAllClassSchedules(pool *pgxpool.Pool) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		timetables, err := repository.GetTimetables(pool)
 		if err != nil {
 			return c.JSON(500, map[string]string{"error": err.Error()})
 		}
@@ -56,14 +89,14 @@ func HandleGetAllClassSchedules(conn *pgx.Conn) echo.HandlerFunc {
 	}
 }
 
-func HandleGetScheduleByGroupID(conn *pgx.Conn) echo.HandlerFunc {
+func HandleGetScheduleByGroupID(pool *pgxpool.Pool) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		groupId, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
 			return c.JSON(400, map[string]string{"error": "invalid group id"})
 		}
 
-		timetables, err := repository.GetTimetableByGroupID(conn, groupId)
+		timetables, err := repository.GetTimetableByGroupID(pool, groupId)
 		if err != nil {
 			return c.JSON(500, map[string]string{"error": err.Error()})
 		}
@@ -72,7 +105,62 @@ func HandleGetScheduleByGroupID(conn *pgx.Conn) echo.HandlerFunc {
 	}
 }
 
-func HandlePostSubjectAttendance(conn *pgx.Conn) echo.HandlerFunc {
+func HandlePostStudent(pool *pgxpool.Pool) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		var student models.StudentPostRequest
+		err := c.Bind(&student)
+		if err != nil {
+			return c.JSON(400, map[string]string{"error": "invalid request body"})
+		}
+
+		id, err := repository.CreateStudent(pool, student)
+		if err != nil {
+			return c.JSON(500, map[string]string{"error": err.Error()})
+		}
+
+		return c.JSON(200, map[string]string{"message": "student created successfully ", "student_id": strconv.Itoa(id)})
+	}
+}
+
+func HandleUpdateStudent(pool *pgxpool.Pool) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		studentId, err := strconv.Atoi(c.Param("id"))
+		if err != nil {
+			return c.JSON(400, map[string]string{"error": "invalid student id"})
+		}
+
+		var student models.StudentPostRequest
+		err = c.Bind(&student)
+		if err != nil {
+			return c.JSON(400, map[string]string{"error": "invalid request body"})
+		}
+
+		err = repository.UpdateStudent(pool, studentId, student)
+		if err != nil {
+			return c.JSON(500, map[string]string{"error": err.Error()})
+		}
+
+		return c.JSON(200, map[string]string{"message": "student updated successfully"})
+	}
+}
+
+func HandleDeleteStudent(pool *pgxpool.Pool) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		studentId, err := strconv.Atoi(c.Param("id"))
+		if err != nil {
+			return c.JSON(400, map[string]string{"error": "invalid student id"})
+		}
+
+		err = repository.DeleteStudent(pool, studentId)
+		if err != nil {
+			return c.JSON(500, map[string]string{"error": err.Error()})
+		}
+
+		return c.JSON(200, map[string]string{"message": "student deleted successfully"})
+	}
+}
+
+func HandlePostSubjectAttendance(pool *pgxpool.Pool) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		var attendanceRequest models.AttendancePostRequest
 		err := c.Bind(&attendanceRequest)
@@ -90,13 +178,13 @@ func HandlePostSubjectAttendance(conn *pgx.Conn) echo.HandlerFunc {
 			return c.JSON(400, map[string]string{"error": "invalid date format"})
 		}
 
-		timetable, err := repository.GetTimetableByTimetableID(conn, attendance.TimetableID)
+		timetable, err := repository.GetTimetableByTimetableID(pool, attendance.TimetableID)
 		if err != nil {
 			return c.JSON(500, map[string]string{"error": err.Error()})
 		}
 		attendance.CourseID = timetable.CourseID
 
-		err = repository.RecordAttendance(conn, attendance)
+		err = repository.RecordAttendance(pool, attendance)
 		if err != nil {
 			return c.JSON(500, map[string]string{"error": err.Error()})
 		}
@@ -105,14 +193,14 @@ func HandlePostSubjectAttendance(conn *pgx.Conn) echo.HandlerFunc {
 	}
 }
 
-func HandleGetAttendanceByStudentID(conn *pgx.Conn) echo.HandlerFunc {
+func HandleGetAttendanceByStudentID(pool *pgxpool.Pool) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		studentId, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
 			return c.JSON(400, map[string]string{"error": "invalid student id"})
 		}
 
-		attendances, err := repository.GetAttendanceByStudentID(conn, studentId)
+		attendances, err := repository.GetAttendanceByStudentID(pool, studentId)
 		if err != nil {
 			return c.JSON(500, map[string]string{"error": err.Error()})
 		}
@@ -121,14 +209,14 @@ func HandleGetAttendanceByStudentID(conn *pgx.Conn) echo.HandlerFunc {
 	}
 }
 
-func HandleGetAttendanceBySubjectID(conn *pgx.Conn) echo.HandlerFunc {
+func HandleGetAttendanceBySubjectID(pool *pgxpool.Pool) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		courseId, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
 			return c.JSON(400, map[string]string{"error": "invalid course id"})
 		}
 
-		attendances, err := repository.GetAttendanceBySubjectID(conn, courseId)
+		attendances, err := repository.GetAttendanceBySubjectID(pool, courseId)
 		if err != nil {
 			return c.JSON(500, map[string]string{"error": err.Error()})
 		}
@@ -137,7 +225,7 @@ func HandleGetAttendanceBySubjectID(conn *pgx.Conn) echo.HandlerFunc {
 	}
 }
 
-func HandleUserRegister(conn *pgx.Conn) echo.HandlerFunc {
+func HandleUserRegister(pool *pgxpool.Pool) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		var registerRequest models.UserRegisterRequest
 		err := c.Bind(&registerRequest)
@@ -151,7 +239,7 @@ func HandleUserRegister(conn *pgx.Conn) echo.HandlerFunc {
 			return c.JSON(500, map[string]string{"error": "failed to hash password"})
 		}
 
-		err = repository.CreateUser(conn, registerRequest.Email, string(hashedPassword))
+		err = repository.CreateUser(pool, registerRequest.Email, string(hashedPassword))
 
 		if err != nil {
 			return c.JSON(500, map[string]string{"error": err.Error()})
@@ -161,7 +249,7 @@ func HandleUserRegister(conn *pgx.Conn) echo.HandlerFunc {
 	}
 }
 
-func HandleUserLogin(conn *pgx.Conn, jwtSecret string) echo.HandlerFunc {
+func HandleUserLogin(pool *pgxpool.Pool, jwtSecret string) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		var loginRequest models.UserRegisterRequest
 		err := c.Bind(&loginRequest)
@@ -169,7 +257,7 @@ func HandleUserLogin(conn *pgx.Conn, jwtSecret string) echo.HandlerFunc {
 			return c.JSON(400, map[string]string{"error": "invalid request body"})
 		}
 
-		hashedPassword, err := repository.GetUserByEmail(conn, loginRequest.Email)
+		hashedPassword, err := repository.GetUserByEmail(pool, loginRequest.Email)
 		if err != nil {
 			return c.JSON(500, map[string]string{"error": err.Error()})
 		}

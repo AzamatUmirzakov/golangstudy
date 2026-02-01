@@ -7,24 +7,25 @@ import (
 	"os"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
 
 func main() {
 	databaseURL := os.Getenv("DATABASE_URL")
-	conn, err := pgx.Connect(context.Background(), databaseURL)
+	pool, err := pgxpool.New(context.Background(), databaseURL)
 	if err != nil {
 		panic(err)
 	}
 
-	defer conn.Close(context.Background())
+	defer pool.Close()
 
 	// start the server
 	e := echo.New()
 	e.GET("/", handler.HelloWorldHandler)
 	e.Use(middleware.RequestLogger())
+	// cors config
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{
 			"http://localhost:5173",
@@ -33,17 +34,23 @@ func main() {
 		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization},
 	}))
 
-	e.POST("api/auth/register", handler.HandleUserRegister(conn))
-	e.POST("api/auth/login", handler.HandleUserLogin(conn, os.Getenv("JWT_SECRET")))
+	e.POST("api/auth/register", handler.HandleUserRegister(pool))
+	e.POST("api/auth/login", handler.HandleUserLogin(pool, os.Getenv("JWT_SECRET")))
 
 	api := e.Group("/")
 	api.Use(JWTMiddleware)
-	api.GET("students/:id", handler.HandleGetStudent(conn))
-	api.GET("all_class_schedule", handler.HandleGetAllClassSchedules(conn))
-	api.GET("schedule/group/:id", handler.HandleGetScheduleByGroupID(conn))
-	api.POST("attendance/subject", handler.HandlePostSubjectAttendance(conn))
-	api.GET("attendanceBySubjectId/:id", handler.HandleGetAttendanceBySubjectID(conn))
-	api.GET("attendanceByStudentId/:id", handler.HandleGetAttendanceByStudentID(conn))
+	api.GET("student/:id", handler.HandleGetStudent(pool))
+	api.GET("students", handler.HandleGetAllStudents(pool))
+	api.GET("groups", handler.HandleGetGroups(pool))
+	api.GET("faculties", handler.HandleGetFaculties(pool))
+	api.GET("all_class_schedule", handler.HandleGetAllClassSchedules(pool))
+	api.POST("student", handler.HandlePostStudent(pool))
+	api.PUT("student/:id", handler.HandleUpdateStudent(pool))
+	api.DELETE("student/:id", handler.HandleDeleteStudent(pool))
+	api.GET("schedule/group/:id", handler.HandleGetScheduleByGroupID(pool))
+	api.POST("attendance/subject", handler.HandlePostSubjectAttendance(pool))
+	api.GET("attendanceBySubjectId/:id", handler.HandleGetAttendanceBySubjectID(pool))
+	api.GET("attendanceByStudentId/:id", handler.HandleGetAttendanceByStudentID(pool))
 
 	e.Logger.Fatal(e.Start(":8080"))
 }

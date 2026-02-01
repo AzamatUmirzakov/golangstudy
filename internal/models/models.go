@@ -16,6 +16,15 @@ type Student struct {
 	GroupID   int       `json:"group_id"`
 }
 
+type StudentPostRequest struct {
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Email     string `json:"email"`
+	Gender    string `json:"gender"`
+	BirthDate string `json:"birth_date"`
+	GroupID   int    `json:"group_id"`
+}
+
 type StudentGroup struct {
 	GroupID   int    `json:"group_id"`
 	FacultyID int    `json:"faculty_id"`
