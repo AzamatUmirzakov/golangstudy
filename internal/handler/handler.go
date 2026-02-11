@@ -403,6 +403,77 @@ func HandleGetSubjects(pool *pgxpool.Pool) echo.HandlerFunc {
 	}
 }
 
+func HandleGetSubject(pool *pgxpool.Pool) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		subjectId, err := strconv.Atoi(c.Param("id"))
+		if err != nil {
+			return c.JSON(400, map[string]string{"error": "invalid subject id"})
+		}
+
+		subject, err := repository.GetSubjectByID(pool, subjectId)
+		if err != nil {
+			return c.JSON(500, map[string]string{"error": err.Error()})
+		}
+
+		return c.JSON(200, subject)
+	}
+}
+
+func HandlePostSubject(pool *pgxpool.Pool) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		var subject models.Subject
+		err := c.Bind(&subject)
+		if err != nil {
+			return c.JSON(400, map[string]string{"error": "invalid request body"})
+		}
+
+		id, err := repository.CreateSubject(pool, subject)
+		if err != nil {
+			return c.JSON(500, map[string]string{"error": err.Error()})
+		}
+
+		return c.JSON(200, map[string]int{"id": id})
+	}
+}
+
+func HandleUpdateSubject(pool *pgxpool.Pool) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		subjectId, err := strconv.Atoi(c.Param("id"))
+		if err != nil {
+			return c.JSON(400, map[string]string{"error": "invalid subject id"})
+		}
+
+		var subject models.Subject
+		err = c.Bind(&subject)
+		if err != nil {
+			return c.JSON(400, map[string]string{"error": "invalid request body"})
+		}
+
+		err = repository.UpdateSubject(pool, subjectId, subject)
+		if err != nil {
+			return c.JSON(500, map[string]string{"error": err.Error()})
+		}
+
+		return c.JSON(200, map[string]string{"message": "subject updated successfully"})
+	}
+}
+
+func HandleDeleteSubject(pool *pgxpool.Pool) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		subjectId, err := strconv.Atoi(c.Param("id"))
+		if err != nil {
+			return c.JSON(400, map[string]string{"error": "invalid subject id"})
+		}
+
+		err = repository.DeleteSubject(pool, subjectId)
+		if err != nil {
+			return c.JSON(500, map[string]string{"error": err.Error()})
+		}
+
+		return c.JSON(200, map[string]string{"message": "subject deleted successfully"})
+	}
+}
+
 func HandleGetProfessors(pool *pgxpool.Pool) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		professors, err := repository.GetAllProfessors(pool)
@@ -411,5 +482,76 @@ func HandleGetProfessors(pool *pgxpool.Pool) echo.HandlerFunc {
 		}
 
 		return c.JSON(200, professors)
+	}
+}
+
+func HandleGetProfessor(pool *pgxpool.Pool) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		professorId, err := strconv.Atoi(c.Param("id"))
+		if err != nil {
+			return c.JSON(400, map[string]string{"error": "invalid professor id"})
+		}
+
+		professor, err := repository.GetProfessorByID(pool, professorId)
+		if err != nil {
+			return c.JSON(500, map[string]string{"error": err.Error()})
+		}
+
+		return c.JSON(200, professor)
+	}
+}
+
+func HandlePostProfessor(pool *pgxpool.Pool) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		var professor models.Professor
+		err := c.Bind(&professor)
+		if err != nil {
+			return c.JSON(400, map[string]string{"error": "invalid request body"})
+		}
+
+		id, err := repository.CreateProfessor(pool, professor)
+		if err != nil {
+			return c.JSON(500, map[string]string{"error": err.Error()})
+		}
+
+		return c.JSON(200, map[string]int{"id": id})
+	}
+}
+
+func HandleUpdateProfessor(pool *pgxpool.Pool) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		professorId, err := strconv.Atoi(c.Param("id"))
+		if err != nil {
+			return c.JSON(400, map[string]string{"error": "invalid professor id"})
+		}
+
+		var professor models.Professor
+		err = c.Bind(&professor)
+		if err != nil {
+			return c.JSON(400, map[string]string{"error": "invalid request body"})
+		}
+
+		err = repository.UpdateProfessor(pool, professorId, professor)
+		if err != nil {
+			return c.JSON(500, map[string]string{"error": err.Error()})
+		}
+
+		return c.JSON(200, map[string]string{"message": "professor updated successfully"})
+	}
+}
+
+func HandleDeleteProfessor(pool *pgxpool.Pool) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		professorId, err := strconv.Atoi(c.Param("id"))
+		if err != nil {
+			return c.JSON(400, map[string]string{"error": "invalid professor id"})
+		}
+
+		err = repository.DeleteProfessor(pool, professorId)
+		if err != nil {
+			return c.JSON(500, map[string]string{"error": err.Error()})
+		}
+
+		return c.JSON(200, map[string]string{"message": "professor deleted successfully"})
 	}
 }

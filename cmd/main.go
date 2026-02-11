@@ -59,7 +59,15 @@ func main() {
 	api.GET("attendanceByStudentId/:id", handler.HandleGetAttendanceByStudentID(pool))
 
 	api.GET("subjects", handler.HandleGetSubjects(pool))
+	api.GET("subject/:id", handler.HandleGetSubject(pool))
+	api.POST("subject", handler.HandlePostSubject(pool))
+	api.PUT("subject/:id", handler.HandleUpdateSubject(pool))
+	api.DELETE("subject/:id", handler.HandleDeleteSubject(pool))
 	api.GET("professors", handler.HandleGetProfessors(pool))
+	api.GET("professor/:id", handler.HandleGetProfessor(pool))
+	api.POST("professor", handler.HandlePostProfessor(pool))
+	api.PUT("professor/:id", handler.HandleUpdateProfessor(pool))
+	api.DELETE("professor/:id", handler.HandleDeleteProfessor(pool))
 
 	e.Logger.Fatal(e.Start(":8080"))
 }

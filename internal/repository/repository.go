@@ -304,6 +304,36 @@ func GetAllSubjects(pool *pgxpool.Pool) ([]models.Subject, error) {
 	return subjects, nil
 }
 
+func GetSubjectByID(pool *pgxpool.Pool, id int) (models.Subject, error) {
+	var subject models.Subject
+	err := pool.QueryRow(context.Background(), "SELECT * FROM subject WHERE subject_id=$1", id).Scan(&subject.SubjectID, &subject.SubjectName, &subject.FacultyID, &subject.ProfessorID)
+
+	if err != nil {
+		return models.Subject{}, err
+	}
+
+	return subject, nil
+}
+
+func CreateSubject(pool *pgxpool.Pool, subject models.Subject) (int, error) {
+	var subjectID int
+	err := pool.QueryRow(context.Background(), "INSERT INTO subject (subject_name, faculty_id, professor_id) VALUES ($1, $2, $3) RETURNING subject_id", subject.SubjectName, subject.FacultyID, subject.ProfessorID).Scan(&subjectID)
+	if err != nil {
+		return 0, err
+	}
+	return subjectID, nil
+}
+
+func UpdateSubject(pool *pgxpool.Pool, id int, subject models.Subject) error {
+	_, err := pool.Exec(context.Background(), "UPDATE subject SET subject_name=$1, faculty_id=$2, professor_id=$3 WHERE subject_id=$4", subject.SubjectName, subject.FacultyID, subject.ProfessorID, id)
+	return err
+}
+
+func DeleteSubject(pool *pgxpool.Pool, id int) error {
+	_, err := pool.Exec(context.Background(), "DELETE FROM subject WHERE subject_id=$1", id)
+	return err
+}
+
 func GetAllProfessors(pool *pgxpool.Pool) ([]models.Professor, error) {
 	rows, err := pool.Query(context.Background(), "SELECT * FROM professor ORDER BY professor_id ASC")
 	if err != nil {
@@ -326,4 +356,34 @@ func GetAllProfessors(pool *pgxpool.Pool) ([]models.Professor, error) {
 	}
 
 	return professors, nil
+}
+
+func GetProfessorByID(pool *pgxpool.Pool, id int) (models.Professor, error) {
+	var professor models.Professor
+	err := pool.QueryRow(context.Background(), "SELECT * FROM professor WHERE professor_id=$1", id).Scan(&professor.ProfessorID, &professor.FirstName, &professor.LastName, &professor.Email, &professor.FacultyID)
+
+	if err != nil {
+		return models.Professor{}, err
+	}
+
+	return professor, nil
+}
+
+func CreateProfessor(pool *pgxpool.Pool, professor models.Professor) (int, error) {
+	var professorID int
+	err := pool.QueryRow(context.Background(), "INSERT INTO professor (first_name, last_name, email, faculty_id) VALUES ($1, $2, $3, $4) RETURNING professor_id", professor.FirstName, professor.LastName, professor.Email, professor.FacultyID).Scan(&professorID)
+	if err != nil {
+		return 0, err
+	}
+	return professorID, nil
+}
+
+func UpdateProfessor(pool *pgxpool.Pool, id int, professor models.Professor) error {
+	_, err := pool.Exec(context.Background(), "UPDATE professor SET first_name=$1, last_name=$2, email=$3, faculty_id=$4 WHERE professor_id=$5", professor.FirstName, professor.LastName, professor.Email, professor.FacultyID, id)
+	return err
+}
+
+func DeleteProfessor(pool *pgxpool.Pool, id int) error {
+	_, err := pool.Exec(context.Background(), "DELETE FROM professor WHERE professor_id=$1", id)
+	return err
 }
