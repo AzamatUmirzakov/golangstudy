@@ -36,10 +36,11 @@ type Faculty struct {
 	FacultyName string `json:"faculty_name"`
 }
 
-type Course struct {
-	CourseID   int    `json:"course_id"`
-	CourseName string `json:"course_name"`
-	FacultyID  int    `json:"faculty_id"`
+type Subject struct {
+	SubjectID   int    `json:"subject_id"`
+	SubjectName string `json:"subject_name"`
+	FacultyID   int    `json:"faculty_id"`
+	ProfessorID int    `json:"professor_id"`
 }
 
 type Timetable struct {
@@ -50,14 +51,14 @@ type Timetable struct {
 	EndTime     time.Time `json:"end_time"`
 	Weekday     string    `json:"weekday"`
 	Location    string    `json:"location"`
-	CourseID    int       `json:"course_id"`
+	SubjectID   int       `json:"subject_id"`
 }
 
 type Attendance struct {
 	AttendanceID int       `json:"attendance_id"`
 	StudentID    int       `json:"student_id"`
 	TimetableID  int       `json:"timetable_id"`
-	CourseID     int       `json:"course_id"`
+	SubjectID    int       `json:"subject_id"`
 	Visited      bool      `json:"visited"`
 	VisitDay     time.Time `json:"visit_day"`
 }
@@ -88,4 +89,12 @@ type UserRegisterRequest struct {
 type UserClaims struct {
 	Email string `json:"email"`
 	jwt.RegisteredClaims
+}
+
+type Professor struct {
+	ProfessorID int    `json:"professor_id"`
+	FirstName   string `json:"first_name"`
+	LastName    string `json:"last_name"`
+	Email       string `json:"email"`
+	FacultyID   int    `json:"faculty_id"`
 }

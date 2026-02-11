@@ -58,6 +58,9 @@ func main() {
 	api.GET("attendanceBySubjectId/:id", handler.HandleGetAttendanceBySubjectID(pool))
 	api.GET("attendanceByStudentId/:id", handler.HandleGetAttendanceByStudentID(pool))
 
+	api.GET("subjects", handler.HandleGetSubjects(pool))
+	api.GET("professors", handler.HandleGetProfessors(pool))
+
 	e.Logger.Fatal(e.Start(":8080"))
 }
 

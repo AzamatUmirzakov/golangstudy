@@ -23,9 +23,9 @@ CREATE TABLE professor (
     email VARCHAR(30) UNIQUE NOT NULL,
     faculty_id INT REFERENCES faculty(faculty_id) NOT NULL
 );
-CREATE TABLE course (
-    course_id SERIAL PRIMARY KEY,
-    course_name VARCHAR(100) NOT NULL,
+CREATE TABLE subject (
+    subject_id SERIAL PRIMARY KEY,
+    subject_name VARCHAR(100) NOT NULL,
     faculty_id INT REFERENCES faculty(faculty_id) NOT NULL,
     professor_id INT REFERENCES professor(professor_id) NOT NULL
 );
@@ -46,20 +46,20 @@ CREATE TABLE timetable (
     end_time TIME NOT NULL,
     weekday weekday_enum NOT NULL,
     location VARCHAR(20),
-    course_id INT REFERENCES course(course_id) NOT NULL
+    subject_id INT REFERENCES subject(subject_id) NOT NULL
 );
 CREATE TABLE attendance (
     attendance_id SERIAL PRIMARY KEY,
     visited BOOLEAN NOT NULL,
     visit_day DATE NOT NULL,
     student_id INT NOT NULL REFERENCES student(student_id),
-    course_id INT NOT NULL REFERENCES course(course_id),
+    subject_id INT NOT NULL REFERENCES subject(subject_id),
     timetable_id INT NOT NULL REFERENCES timetable(timetable_id)
 );
-CREATE TABLE course_enrollment (
+CREATE TABLE subject_enrollment (
     enrollment_id SERIAL PRIMARY KEY,
     student_id INT NOT NULL REFERENCES student(student_id),
-    course_id INT NOT NULL REFERENCES course(course_id)
+    subject_id INT NOT NULL REFERENCES subject(subject_id)
 );
 INSERT INTO faculty (faculty_name)
 VALUES ('School of Computing'),
@@ -117,7 +117,7 @@ VALUES (
         'michael.williams@uni.edu',
         2
     );
-INSERT INTO course (course_name, faculty_id, professor_id)
+INSERT INTO subject (subject_name, faculty_id, professor_id)
 VALUES ('Introduction to SQL', 1, 1),
     ('Marketing 101', 2, 2);
 INSERT INTO timetable (
@@ -127,7 +127,7 @@ INSERT INTO timetable (
         end_time,
         weekday,
         location,
-        course_id
+        subject_id
     )
 VALUES (
         1,
@@ -151,13 +151,13 @@ INSERT INTO attendance (
         visited,
         visit_day,
         student_id,
-        course_id,
+        subject_id,
         timetable_id
     )
 VALUES (TRUE, '2026-01-19', 1, 1, 1),
     (FALSE, '2026-01-19', 2, 1, 1),
     (TRUE, '2026-01-20', 3, 2, 2);
-INSERT INTO course_enrollment (student_id, course_id)
+INSERT INTO subject_enrollment (student_id, subject_id)
 VALUES (1, 1),
     -- Alice → Introduction to SQL
     (2, 1),

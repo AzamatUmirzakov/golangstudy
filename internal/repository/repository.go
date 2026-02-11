@@ -141,7 +141,7 @@ func GetGroupByID(pool *pgxpool.Pool, groupId int) (models.StudentGroup, error) 
 
 func GetTimetableByTimetableID(pool *pgxpool.Pool, timetableId int) (models.Timetable, error) {
 	var timetable models.Timetable
-	err := pool.QueryRow(context.Background(), "SELECT * FROM timetable WHERE timetable_id = $1", timetableId).Scan(&timetable.TimetableID, &timetable.FacultyID, &timetable.GroupID, &timetable.StartTime, &timetable.EndTime, &timetable.Weekday, &timetable.Location, &timetable.CourseID)
+	err := pool.QueryRow(context.Background(), "SELECT * FROM timetable WHERE timetable_id = $1", timetableId).Scan(&timetable.TimetableID, &timetable.FacultyID, &timetable.GroupID, &timetable.StartTime, &timetable.EndTime, &timetable.Weekday, &timetable.Location, &timetable.SubjectID)
 	if err != nil {
 		return models.Timetable{}, err
 	}
@@ -160,7 +160,7 @@ func GetTimetables(pool *pgxpool.Pool) ([]models.Timetable, error) {
 	var timetables []models.Timetable
 	for rows.Next() {
 		var timetable models.Timetable
-		err := rows.Scan(&timetable.TimetableID, &timetable.FacultyID, &timetable.GroupID, &timetable.StartTime, &timetable.EndTime, &timetable.Weekday, &timetable.Location, &timetable.CourseID)
+		err := rows.Scan(&timetable.TimetableID, &timetable.FacultyID, &timetable.GroupID, &timetable.StartTime, &timetable.EndTime, &timetable.Weekday, &timetable.Location, &timetable.SubjectID)
 		if err != nil {
 			return nil, err
 		}
@@ -184,7 +184,7 @@ func GetTimetableByGroupID(pool *pgxpool.Pool, groupId int) ([]models.Timetable,
 
 	for rows.Next() {
 		var timetable models.Timetable
-		err := rows.Scan(&timetable.TimetableID, &timetable.FacultyID, &timetable.GroupID, &timetable.StartTime, &timetable.EndTime, &timetable.Weekday, &timetable.Location, &timetable.CourseID)
+		err := rows.Scan(&timetable.TimetableID, &timetable.FacultyID, &timetable.GroupID, &timetable.StartTime, &timetable.EndTime, &timetable.Weekday, &timetable.Location, &timetable.SubjectID)
 		if err != nil {
 			return nil, err
 		}
@@ -199,13 +199,13 @@ func GetTimetableByGroupID(pool *pgxpool.Pool, groupId int) ([]models.Timetable,
 }
 
 func RecordAttendance(pool *pgxpool.Pool, attendance models.Attendance) error {
-	_, err := pool.Exec(context.Background(), "INSERT INTO attendance (student_id, timetable_id, course_id, visited, visit_day) VALUES ($1, $2, $3, $4, $5)", attendance.StudentID, attendance.TimetableID, attendance.CourseID, attendance.Visited, attendance.VisitDay)
+	_, err := pool.Exec(context.Background(), "INSERT INTO attendance (student_id, timetable_id, subject_id, visited, visit_day) VALUES ($1, $2, $3, $4, $5)", attendance.StudentID, attendance.TimetableID, attendance.SubjectID, attendance.Visited, attendance.VisitDay)
 	return err
 }
 
-func GetAttendanceBySubjectID(pool *pgxpool.Pool, courseId int) ([]models.Attendance, error) {
+func GetAttendanceBySubjectID(pool *pgxpool.Pool, subjectId int) ([]models.Attendance, error) {
 	var attendances []models.Attendance
-	rows, err := pool.Query(context.Background(), "SELECT * FROM attendance WHERE course_id = $1", courseId)
+	rows, err := pool.Query(context.Background(), "SELECT * FROM attendance WHERE subject_id = $1", subjectId)
 	if err != nil {
 		return nil, err
 	}
@@ -213,7 +213,7 @@ func GetAttendanceBySubjectID(pool *pgxpool.Pool, courseId int) ([]models.Attend
 
 	for rows.Next() {
 		var attendance models.Attendance
-		err := rows.Scan(&attendance.AttendanceID, &attendance.Visited, &attendance.VisitDay, &attendance.StudentID, &attendance.CourseID, &attendance.TimetableID)
+		err := rows.Scan(&attendance.AttendanceID, &attendance.Visited, &attendance.VisitDay, &attendance.StudentID, &attendance.SubjectID, &attendance.TimetableID)
 		if err != nil {
 			return nil, err
 		}
@@ -233,7 +233,7 @@ func GetAttendanceByStudentID(pool *pgxpool.Pool, studentId int) ([]models.Atten
 
 	for rows.Next() {
 		var attendance models.Attendance
-		err := rows.Scan(&attendance.AttendanceID, &attendance.Visited, &attendance.VisitDay, &attendance.StudentID, &attendance.CourseID, &attendance.TimetableID)
+		err := rows.Scan(&attendance.AttendanceID, &attendance.Visited, &attendance.VisitDay, &attendance.StudentID, &attendance.SubjectID, &attendance.TimetableID)
 		if err != nil {
 			return nil, err
 		}
@@ -278,4 +278,52 @@ func UpdateStudent(pool *pgxpool.Pool, id int, student models.StudentPostRequest
 func DeleteStudent(pool *pgxpool.Pool, id int) error {
 	_, err := pool.Exec(context.Background(), "DELETE FROM student WHERE student_id=$1", id)
 	return err
+}
+
+func GetAllSubjects(pool *pgxpool.Pool) ([]models.Subject, error) {
+	rows, err := pool.Query(context.Background(), "SELECT * FROM subject ORDER BY subject_id ASC")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var subjects []models.Subject
+	for rows.Next() {
+		var subject models.Subject
+		err := rows.Scan(&subject.SubjectID, &subject.SubjectName, &subject.FacultyID, &subject.ProfessorID)
+		if err != nil {
+			return nil, err
+		}
+		subjects = append(subjects, subject)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return subjects, nil
+}
+
+func GetAllProfessors(pool *pgxpool.Pool) ([]models.Professor, error) {
+	rows, err := pool.Query(context.Background(), "SELECT * FROM professor ORDER BY professor_id ASC")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var professors []models.Professor
+	for rows.Next() {
+		var professor models.Professor
+		err := rows.Scan(&professor.ProfessorID, &professor.FirstName, &professor.LastName, &professor.Email, &professor.FacultyID)
+		if err != nil {
+			return nil, err
+		}
+		professors = append(professors, professor)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return professors, nil
 }

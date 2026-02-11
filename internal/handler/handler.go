@@ -292,7 +292,7 @@ func HandlePostSubjectAttendance(pool *pgxpool.Pool) echo.HandlerFunc {
 		if err != nil {
 			return c.JSON(500, map[string]string{"error": err.Error()})
 		}
-		attendance.CourseID = timetable.CourseID
+		attendance.SubjectID = timetable.SubjectID
 
 		err = repository.RecordAttendance(pool, attendance)
 		if err != nil {
@@ -389,5 +389,27 @@ func HandleUserLogin(pool *pgxpool.Pool, jwtSecret string) echo.HandlerFunc {
 		}
 
 		return c.JSON(200, map[string]string{"message": "user logged in successfully", "token": tokenString})
+	}
+}
+
+func HandleGetSubjects(pool *pgxpool.Pool) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		subjects, err := repository.GetAllSubjects(pool)
+		if err != nil {
+			return c.JSON(500, map[string]string{"error": err.Error()})
+		}
+
+		return c.JSON(200, subjects)
+	}
+}
+
+func HandleGetProfessors(pool *pgxpool.Pool) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		professors, err := repository.GetAllProfessors(pool)
+		if err != nil {
+			return c.JSON(500, map[string]string{"error": err.Error()})
+		}
+
+		return c.JSON(200, professors)
 	}
 }
